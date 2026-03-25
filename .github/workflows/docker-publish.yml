@@ -73,20 +73,20 @@ jobs:
           context: .
           target: runtime
           load: true
-          tags: movie-reco-api:test
+          tags: ticket-reco-api:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       # ── Step 11: Start the container and smoke-test the API ─────
       - name: Start container and run smoke test
         run: |
-          docker run -d -p 8000:8000 --name reco_test movie-reco-api:test
+          docker run -d -p 8000:8000 --name reco_test ticket-reco-api:test
           echo 'Waiting for API to be ready...'
           sleep 10
           curl --fail --retry 5 --retry-delay 3 http://localhost:8000/health
           curl --fail -X POST http://localhost:8000/recommend \
             -H 'Content-Type: application/json' \
-            -d '{"movie_title": "Toy Story (1995)", "k": 3}'
+            -d '{"origin": "Dubai", "destination": "London", "date": "2026-04-05"}'
 
       # ── Step 12: Stop the test container ───────────────────────
       - name: Stop test container
