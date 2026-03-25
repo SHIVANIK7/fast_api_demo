@@ -10,7 +10,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml .
 
 # Install only production dependencies into /app/.venv
-RUN uv sync --no-dev -no-install-project
+RUN uv sync --no-dev --no-install-project
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────
 FROM python:3.11-slim AS runtime
