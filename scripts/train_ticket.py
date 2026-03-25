@@ -5,6 +5,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_squared_error
 import pickle
 import joblib
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+file_path = BASE_DIR / "data.csv"
 
 def load_and_prepare_data(df):
     df = df.copy()
@@ -210,7 +214,7 @@ def save_artifacts(
     df.to_parquet(f"{artifacts_dir}/data.parquet", index=False)
     
 def main():
-    df = pd.read_csv(r"C:\FastAPIDemo\fast_api_demo\scripts\data.csv")
+    df = pd.read_csv(file_path)
     
     df = load_and_prepare_data(df)
     df, origin_encoder, dest_encoder = encode_locations(df)
