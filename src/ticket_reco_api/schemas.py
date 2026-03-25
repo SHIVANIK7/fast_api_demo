@@ -12,5 +12,4 @@ class TicketPriceResponse(BaseModel):
     destination: str
     date: str
     predicted_price: float
-    currency: str
     airline: str

@@ -82,22 +82,28 @@ def create_app() -> FastAPI:
 
     @app.get("/destinations")
     
+    @app.get("/destinations")
     def get_destinations(origin: str | None = None) -> list[str]:
         df = state["data"]
         if df is None:
             return []
 
-        if "destination" not in df.columns:
+        if "origin" not in df.columns or "destination" not in df.columns:
             return []
 
         temp = df.copy()
 
         if origin:
-            if "origin" not in temp.columns:
-                return []
             temp = temp[temp["origin"].astype(str).str.strip() == origin]
 
-        return sorted(temp["destination"].dropna().astype(str).str.strip().unique().tolist())
+        return sorted(
+            temp["destination"]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .unique()
+            .tolist()
+        )
 
     @app.post("/predict", response_model=TicketPriceResponse)
 
