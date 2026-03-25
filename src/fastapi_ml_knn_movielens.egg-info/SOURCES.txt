@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/fastapi_ml_knn_movielens.egg-info/PKG-INFO
+src/fastapi_ml_knn_movielens.egg-info/SOURCES.txt
+src/fastapi_ml_knn_movielens.egg-info/dependency_links.txt
+src/fastapi_ml_knn_movielens.egg-info/requires.txt
+src/fastapi_ml_knn_movielens.egg-info/top_level.txt
+src/ticket_reco_api/__init__.py
+src/ticket_reco_api/app.py
+src/ticket_reco_api/recommender.py
+src/ticket_reco_api/schemas.py
+tests/test_health.py
+tests/test_recommend.py

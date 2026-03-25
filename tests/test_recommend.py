@@ -40,9 +40,9 @@ def test_predict_returns_200(monkeypatch):
             airline_lookup={"Dubai_London": "Emirates"},
             history=pd.DataFrame(
                 [
-                    {"origin": "Dubai", "destination": "London", "date": "2026-04-01", "price": 5000},
-                    {"origin": "Dubai", "destination": "London", "date": "2026-04-02", "price": 5100},
-                    {"origin": "Dubai", "destination": "London", "date": "2026-04-03", "price": 5200},
+                    {"origin": "Dubai", "destination": "London", "date": "2026-04-05", "price": 5000},
+                    {"origin": "Dubai", "destination": "London", "date": "2026-04-12", "price": 5100},
+                    {"origin": "Dubai", "destination": "London", "date": "2026-04-19", "price": 5200},
                 ]
             ),
         )
@@ -66,7 +66,7 @@ def test_predict_returns_200(monkeypatch):
             json={
                 "origin": "Dubai",
                 "destination": "London",
-                "travel_date": "2026-04-10",
+                "travel_date": "2026-04-05",
             },
         )
 
@@ -76,7 +76,7 @@ def test_predict_returns_200(monkeypatch):
     assert body["destination"] == "London"
     assert body["predicted_price"] == 5234.75
     assert body["airline"] == "Emirates"
-    assert body["date"] == "2026-04-10"
+    assert body["date"] == "2026-04-05"
 
 
 def test_validation_rejects_empty_origin(monkeypatch):
@@ -99,9 +99,9 @@ def test_validation_rejects_empty_origin(monkeypatch):
             airline_lookup={"Chennai_Delhi": "IndiGo"},
             history=pd.DataFrame(
                 [
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-01", "price": 5000},
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-02", "price": 5100},
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-03", "price": 5200},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-05", "price": 5000},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-12", "price": 5100},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-19", "price": 5200},
                 ]
             ),
         )
@@ -146,8 +146,8 @@ def test_route_not_found_returns_404(monkeypatch):
             airline_lookup={"Chennai_Delhi": "IndiGo"},
             history=pd.DataFrame(
                 [
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-01", "price": 5000},
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-02", "price": 5100},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-05", "price": 5000},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-12", "price": 5100},
                 ]
             ),
         )
@@ -165,7 +165,7 @@ def test_route_not_found_returns_404(monkeypatch):
             json={
                 "origin": "Chennai",
                 "destination": "Delhi",
-                "travel_date": "2026-04-10",
+                "travel_date": "2026-04-05",
             },
         )
 
@@ -192,9 +192,9 @@ def test_sources_returns_unique_origins(monkeypatch):
             airline_lookup={"Dubai_London": "Emirates"},
             history=pd.DataFrame(
                 [
-                    {"origin": "Dubai", "destination": "London", "date": "2026-04-01", "price": 5000},
-                    {"origin": "Dubai", "destination": "Paris", "date": "2026-04-02", "price": 5100},
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-03", "price": 5200},
+                    {"origin": "Dubai", "destination": "London", "date": "2026-04-05", "price": 5000},
+                    {"origin": "Dubai", "destination": "Paris", "date": "2026-04-12", "price": 5100},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-19", "price": 5200},
                 ]
             ),
         )
@@ -240,9 +240,9 @@ def test_destinations_returns_unique_filtered_values(monkeypatch):
             airline_lookup={"Dubai_London": "Emirates"},
             history=pd.DataFrame(
                 [
-                    {"origin": "Dubai", "destination": "London", "date": "2026-04-01", "price": 5000},
-                    {"origin": "Dubai", "destination": "Paris", "date": "2026-04-02", "price": 5100},
-                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-03", "price": 5200},
+                    {"origin": "Dubai", "destination": "London", "date": "2026-04-05", "price": 5000},
+                    {"origin": "Dubai", "destination": "Paris", "date": "2026-04-12", "price": 5100},
+                    {"origin": "Chennai", "destination": "Delhi", "date": "2026-04-19", "price": 5200},
                 ]
             ),
         )
