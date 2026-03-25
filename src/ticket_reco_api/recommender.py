@@ -110,9 +110,10 @@ def predict_price_for_week(
     airline = art.airline_lookup.get(route, "Unknown")
     
     return {
-        "origin": origin,
-        "destination": destination,
-        "date": str(travel_date.date()),
-        "predicted_price": round(pred_price, 2),
-        "airline": airline
+    "origin": origin,
+    "destination": destination,
+    "date": str(travel_date.date()),
+    "predicted_price": round(pred_price, 2),
+    "currency": "USD",
+    "airline": airline
     }
