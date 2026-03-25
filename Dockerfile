@@ -29,4 +29,4 @@ ENV PATH=/app/.venv/bin:$PATH
 
 EXPOSE 8000
 
-CMD ["uvicorn", "movie_reco_api.app:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "ticket_reco_api.app:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000"]
