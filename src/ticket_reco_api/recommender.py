@@ -5,7 +5,12 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+import numpy as np
 
+
+# =========================
+# Exceptions
+# =========================
 
 class ModelNotReadyError(RuntimeError):
     pass
@@ -16,108 +21,98 @@ class RouteNotFoundError(ValueError):
 
 
 @dataclass(frozen=True)
-class RecommenderArtifacts:
+class AirlineArtifacts:
     model: object
-    reference_data: pd.DataFrame | None = None
+    origin_encoder: object
+    dest_encoder: object
+    features: list[str]
+    airline_lookup: dict
+    history: pd.DataFrame
 
+def load_artifacts(artifacts_dir: Path) -> AirlineArtifacts:
+    model_path = artifacts_dir / "model.pkl"
+    origin_enc_path = artifacts_dir / "origin_encoder.pkl"
+    dest_enc_path = artifacts_dir / "dest_encoder.pkl"
+    features_path = artifacts_dir / "features.pkl"
+    airline_lookup_path = artifacts_dir / "airline_lookup.pkl"
+    history_path = artifacts_dir / "data.parquet"
 
-def load_artifacts(artifacts_dir: Path) -> RecommenderArtifacts:
-    model_path = artifacts_dir / "model.joblib"
-    ref_path = artifacts_dir / "reference_data.parquet"
-
-    if not model_path.exists():
+    if not all([
+        model_path.exists(),
+        origin_enc_path.exists(),
+        dest_enc_path.exists(),
+        features_path.exists(),
+        airline_lookup_path.exists(),
+        history_path.exists(),
+    ]):
         raise ModelNotReadyError(
-            "Model artifact not found. Expected: artifacts/model.joblib"
+            "Model artifacts not found. Run training pipeline first."
         )
 
-    model = joblib.load(model_path)
-    reference_data = pd.read_parquet(ref_path) if ref_path.exists() else None
-
-    return RecommenderArtifacts(model=model, reference_data=reference_data)
-
-
-def _build_features(
-    source: str,
-    destination: str,
-    date_of_travel: str,
-    passengers: int,
-) -> pd.DataFrame:
-    travel_dt = pd.to_datetime(date_of_travel)
-
-    return pd.DataFrame(
-        [
-            {
-                "source": source,
-                "destination": destination,
-                "date_of_travel": str(travel_dt.date()),
-                "passengers": passengers,
-                "journey_day": travel_dt.day,
-                "journey_month": travel_dt.month,
-                "journey_weekday": travel_dt.dayofweek,
-            }
-        ]
+    return AirlineArtifacts(
+        model=joblib.load(model_path),
+        origin_encoder=joblib.load(origin_enc_path),
+        dest_encoder=joblib.load(dest_enc_path),
+        features=joblib.load(features_path),
+        airline_lookup=joblib.load(airline_lookup_path),
+        history=pd.read_parquet(history_path),
     )
 
+def safe_label_transform(encoder, value):
+    if value in encoder.classes_:
+        return encoder.transform([value])[0]
+    return -1
 
-def _resolve_airline_name(
-    reference_data: pd.DataFrame | None,
-    source: str,
+def predict_price_for_week(
+    art: AirlineArtifacts,
+    origin: str,
     destination: str,
-    date_of_travel: str,
-) -> str:
-    if reference_data is None or reference_data.empty:
-        return "Demo Airline"
-
-    ref = reference_data.copy()
-    if "date_of_travel" in ref.columns:
-        ref["date_of_travel"] = pd.to_datetime(ref["date_of_travel"]).dt.date.astype(str)
-
-    mask = (
-        ref["source"].astype(str).str.lower().eq(source.lower())
-        & ref["destination"].astype(str).str.lower().eq(destination.lower())
-    )
-
-    if "date_of_travel" in ref.columns:
-        same_date = ref["date_of_travel"].eq(str(pd.to_datetime(date_of_travel).date()))
-        exact = ref[mask & same_date]
-        if not exact.empty and "airline_name" in exact.columns:
-            return str(exact.iloc[0]["airline_name"])
-
-    route_only = ref[mask]
-    if not route_only.empty and "airline_name" in route_only.columns:
-        return str(route_only.iloc[0]["airline_name"])
-
-    raise RouteNotFoundError(
-        f"No matching route found for source='{source}' and destination='{destination}'."
-    )
-
-
-def predict_ticket(
-    art: RecommenderArtifacts,
-    source: str,
-    destination: str,
-    date_of_travel: str,
-    passengers: int,
+    travel_date: str,   # e.g. "2026-05-10"
 ) -> dict:
-    features = _build_features(
-        source=source,
-        destination=destination,
-        date_of_travel=date_of_travel,
-        passengers=passengers,
-    )
-
-    predicted_price = float(art.model.predict(features)[0])
-    airline_name = _resolve_airline_name(
-        reference_data=art.reference_data,
-        source=source,
-        destination=destination,
-        date_of_travel=date_of_travel,
-    )
-
+    
+    df = art.history.copy()
+    travel_date = pd.to_datetime(travel_date)
+    
+    # Get route history
+    route_mask = (df["origin"] == origin) & (df["destination"] == destination)
+    history = df[route_mask].sort_values("date").copy()
+    
+    if len(history) < 3:
+        raise RouteNotFoundError("Not enough historical data for this route.")
+    
+    # Encode safely
+    origin_encoded = safe_label_transform(art.origin_encoder, origin)
+    destination_encoded = safe_label_transform(art.dest_encoder, destination)
+    
+    # Create features for given week
+    month = travel_date.month
+    year = travel_date.year
+    quarter = (month - 1) // 3 + 1
+    
+    # Lag features (latest known values)
+    temp = {
+        "origin_encoded": origin_encoded,
+        "destination_encoded": destination_encoded,
+        "month": month,
+        "year": year,
+        "quarter": quarter,
+        "price_lag_1": history["price"].iloc[-1],
+        "price_lag_2": history["price"].iloc[-2],
+        "price_lag_3": history["price"].iloc[-3],
+        "rolling_mean_3": history["price"].iloc[-3:].mean(),
+    }
+    
+    X = pd.DataFrame([temp])[art.features]
+    
+    pred_price = float(art.model.predict(X)[0])
+    
+    route = f"{origin}_{destination}"
+    airline = art.airline_lookup.get(route, "Unknown")
+    
     return {
-        "source": source,
+        "origin": origin,
         "destination": destination,
-        "predicted_price": round(predicted_price, 2),
-        "airline_name": airline_name,
-        "date_of_travel": str(pd.to_datetime(date_of_travel).date()),
+        "date": str(travel_date.date()),
+        "predicted_price": round(pred_price, 2),
+        "airline": airline
     }
