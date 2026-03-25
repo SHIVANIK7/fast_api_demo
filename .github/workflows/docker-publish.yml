@@ -39,13 +39,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --no-dev
 
-      # ── Step 5: Download MovieLens dataset ─────────────────────
-      - name: Download MovieLens 100k dataset
-        run: uv run python scripts/download_data.py
-
-      # ── Step 6: Train KNN model and generate artifacts ─────────
-      - name: Train KNN model
-        run: uv run python scripts/train_knn.py
+      # ── Step 5: Train lightGBM model and generate artifacts ─────────
+      - name: Train lightGBM
+        run: uv run python scripts/train_ticket.py
 
       # ── Step 7: Enable Docker Buildx ───────────────────────────
       - name: Set up Docker Buildx
